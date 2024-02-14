@@ -10,7 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(janitor) # install.packages('janitor')
 library(skimr) # install.packages('skimr')
-library(stringr) # added when we needed it for benthic data
+library(stringr)# added when we needed it for benthic data
+library(dplyr)
 ```
 
 ```{r}
@@ -24,4 +25,122 @@ buoy_url <- 'http://www.ndbc.noaa.gov/view_text_file.php?filename=mokh1h2010.txt
 benthic_raw <- read_csv(benthic_url)
 head(benthic_raw) 
 ```
+
+using janitor package to clean column headers 
+line 31 good for cleaning messy column headers 
+```{r}
+benthic <- benthic_raw %>%
+  janitor::clean_names()
+names (benthic)
+```
+```{r}
+benthic <- benthic %>% 
+  select(id_name, point, x,y, id_date)
+head(benthic)
+```
+remove the leading and trailing hastags 
+create a column called date
+```{r}
+benthic <- benthic %>%
+  mutate(date = stringr::str_remove_all(id_date, "#"))
+```
+
+look at summary stats
+line 51 shows us unique dates and species 
+```{r}
+summary(benthic)
+skimr::skim(benthic)
+```
+
+check which species are represented 
+```{r}
+unique(benthic$id_name)
+```
+species count by date 
+```{r}
+ggplot(benthic,aes(date,fill=id_name))+
+  geom_bar()
+```
+^^ "why do  the total counts increase rapidly overtime?" 
+
+
+Buoy Data 
+
+import from url 
+```{r}
+buoy <- readr::read_csv(buoy_url)
+head(buoy)
+```
+not working and also local import file due to fixed width file so use read_table2()
+```{r}
+buoy_raw <- read_table2(buoy_url)
+head(buoy_raw)
+```
+
+
+```{r}
+
+buoy_test <- read_lines(buoy_url)
+y <- buoy_test %>%
+  as_data_frame() %>%
+  mutate(value = str_replace_all(value, ' +', ',')) 
+write_delim(y, 'data/buoy_local_copy.csv')
+
+z <- read_csv('data/buoy_local_copy.csv', skip=1)
+head(z)
+```
+
+95 is a function to create the directory 
+
+```{r}
+dir.create("data")
+write_delim(y, 'C:/Users/chosu/OneDrive/Documents/Data-4-SDG/TidyCoral/data/buoy_local_copy.csv')
+
+```
+
+```{r}
+buoy_test <- read_lines(buoy_url)
+y <- buoy_test %>%
+  as_data_frame() %>%
+  mutate(value = str_replace_all(value, ' +', ',')) 
+tryCatch({
+  write_delim(y, 'data/buoy_local_copy.csv')
+}, error = function(e) {
+  print(paste("Error:", e$message))
+})
+
+z <- read_csv('data/buoy_local_copy.csv', skip=1)
+head(z)
+```
+
+```{r}
+buoy <- buoy_raw
+names(buoy)
+head(buoy)
+```
+get ride of double row title columns, sep is string to insert between input vectors 
+- can't seem to modify column names through linking with data frame 
+-i think the filtering conditions is not filtering any rows but idk why. 
+-might be from mistake in previous code above 
+
+```{r}
+head(buoy) <- str_c(head(buoy),
+                     buoy %>% filter ('#YY' == "#yr"), 
+                     sep = "_")
+names(buoy)
+```
+```{r}
+head(buoy)
+```
+```{r}
+names(buoy)
+```
+cleaning up hashtags and slashses
+```{r}
+names(buoy) <- str_replace_all(names(buoy), "/", "_")
+```
+```{r}
+names(buoy)
+```
+
 
