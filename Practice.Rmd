@@ -12,6 +12,7 @@ library(janitor) # install.packages('janitor')
 library(skimr) # install.packages('skimr')
 library(stringr)# added when we needed it for benthic data
 library(dplyr)
+library(plotly) #makes ggplot interactive
 ```
 
 ```{r}
@@ -58,11 +59,24 @@ unique(benthic$id_name)
 ```
 species count by date 
 ```{r}
-ggplot(benthic,aes(date,fill=id_name))+
-  geom_bar()
+benthic_coverage_plot <- ggplot(benthic,aes(date,fill=id_name))+
+  geom_bar()+
+theme_light()+
+labs(title = "Benthic Coverage",
+     subtitle = "NCEAS Tidy Coral",
+     X = "Date",
+     y = "Number of Individuals",
+     fill = "benthic ID")+
+  scale_fill_viridis_d()
+
+benthic_coverage_plot
 ```
 ^^ "why do  the total counts increase rapidly overtime?" 
 
+Plot 
+```{r}
+ggplotly(benthic_coverage_plot)
+```
 
 Buoy Data 
 
@@ -73,7 +87,7 @@ head(buoy)
 ```
 not working and also local import file due to fixed width file so use read_table2()
 ```{r}
-buoy_raw <- read_table2(buoy_url)
+buoy_raw <- read_table2(buoy_url, skip = 1)
 head(buoy_raw)
 ```
 
@@ -86,7 +100,7 @@ y <- buoy_test %>%
   mutate(value = str_replace_all(value, ' +', ',')) 
 write_delim(y, 'data/buoy_local_copy.csv')
 
-z <- read_csv('data/buoy_local_copy.csv', skip=1)
+z <- read_csv('data/buoy_local_copy.csv', )
 head(z)
 ```
 
@@ -118,29 +132,7 @@ buoy <- buoy_raw
 names(buoy)
 head(buoy)
 ```
-get ride of double row title columns, sep is string to insert between input vectors 
-- can't seem to modify column names through linking with data frame 
--i think the filtering conditions is not filtering any rows but idk why. 
--might be from mistake in previous code above 
 
-```{r}
-head(buoy) <- str_c(head(buoy),
-                     buoy %>% filter ('#YY' == "#yr"), 
-                     sep = "_")
-names(buoy)
-```
-```{r}
-head(buoy)
-```
-```{r}
-names(buoy)
-```
-cleaning up hashtags and slashses
-```{r}
-names(buoy) <- str_replace_all(names(buoy), "/", "_")
-```
-```{r}
-names(buoy)
-```
+
 
 
